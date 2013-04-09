@@ -109,6 +109,10 @@ truncation - seem to be far superior to simpler approaches like using
 AF_PACKET/SOCK_RAW sockets, but it's highly unlikely to be any kind of a
 bottleneck with scapy sitting on top of it anyway.
 
+One interesting advantage over libpcap is the ability to capture tunneled
+packets after decryption (traffic coming from ipsec, pptp, openvpn, ssh, etc) or
+transformation (stripping of ipip wrapping, netlink re-injection and such) here.
+
 
 ### nflog_ctypes
 
@@ -116,16 +120,32 @@ scapy_nflog module is based on nflog_ctypes module (originally written for
 [nflog-zmq-pcap-pipe](https://github.com/mk-fg/nflog-zmq-pcap-pipe) project),
 which can be used from any python code (scapy shell included):
 
-	from nflog_ctypes import nflog_generator
+```python
+from nflog_ctypes import nflog_generator
 
-	nflog = nflog_generator(0) # queue id
-	fd = next(nflog) # netlink fd to do select/poll on, if necessary
+# without extra_attrs just packet payload (possibly truncated) is returned
+nflog = nflog_generator(0, extra_attrs=['len', 'ts'], nlbufsiz=2*2**20) # queue id
+fd = next(nflog) # netlink fd to do select/poll on, if necessary
 
-	pkt = next(nflog)
-	print 'Packet:', pkt.encode('hex')
+# pkt_len is the *real* length, before nflog-truncation (if any)
+# pkt_ts is the packet timestamp, as reported by kernel/lib
+pkt, pkt_len, pkt_ts = next(nflog)
+print('Got packet, len: {}, ts: {}'.format(pkt_len, pkt_ts))
 
-	for pkt in nflog: ...(do stuff with each captured packet)
+for pkt, pkt_len, pkt_ts in nflog: # do stuff with each captured packet
+```
 
 Module uses
 [libnetfilter_log](http://www.netfilter.org/projects/libnetfilter_log/index.html)
 via cPython ctypes ffi.
+
+nflog_generator has the keywords to control parameters of netlink socket that
+are passed to libnetfilter_log, see [libnetfilter_log
+documentation](http://www.netfilter.org/projects/libnetfilter_log/doxygen/group__Log.html)
+for more verbose description of these.
+Not everything from libnetfilter_log is supported, patches welcome.
+
+I would have used C
+[nflog-bindings](https://www.wzdftpd.net/redmine/projects/nflog-bindings)
+module, but it leaks RAM like titanic, uses printf() in the code (and for each.
+captured packet, no less), plus still incomplete and buggy.
