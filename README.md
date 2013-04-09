@@ -106,7 +106,7 @@ NFLOG itself is configurable with parameters like --nflog-group and
 queues for different apps and not passing lots of useless L7 data around.
 
 NFLOG performance - especially coupled with in-kernel noise filtering and packet
-truncation - seem to be far superior to simpler approaches like using
+truncation - seem to be more efficient than simpler approaches like using
 AF_PACKET/SOCK_RAW sockets, but it's highly unlikely to be any kind of a
 bottleneck with scapy sitting on top of it anyway.
 

@@ -67,7 +67,9 @@ def nflog_generator(qids,
 			qthresh (packets): set the maximum amount of logs in buffer for each group
 			timeout (seconds): set the maximum time to push log buffer for this group
 			recv_buff (bytes): size of the batch to fetch
-				from libnflog to process in python (default: min(nlbufsiz, 1 MiB))'''
+				from libnflog to process in python (default: min(nlbufsiz, 1 MiB))
+			handle_overflows: supress ENOBUFS OSError on
+				queue overflows (but do log warnings, default: True)'''
 	global _cb_result
 
 	libnflog = libnflog_init()
@@ -120,10 +122,10 @@ def nflog_generator(qids,
 	if not recv_buff: recv_buff = min(nlbufsiz, 1*2**20)
 	buff = ctypes.create_string_buffer(recv_buff)
 
-	block = yield fd # yield fd for poll() on first iteration
+	peek = yield fd # yield fd for poll() on first iteration
 	while True:
-		if block:
-			block = yield NFWouldBlock # poll/recv is required
+		if peek:
+			peek = yield NFWouldBlock # poll/recv is required
 			continue
 		_cb_result = list()
 
@@ -141,7 +143,7 @@ def nflog_generator(qids,
 		# yield individual traffic packets
 		for result in _cb_result:
 			if result is StopIteration: raise result
-			block = yield result
+			peek = yield result
 
 
 if __name__ == '__main__':
