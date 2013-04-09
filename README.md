@@ -1,9 +1,9 @@
 scapy-nflog-capture
 --------------------
 
-Driver for [scapy](http://www.secdev.org/projects/scapy/) network manipulation
-tool to allow capturing packets via [Linux NFLOG
-interface](http://wiki.wireshark.org/CaptureSetup/NFLOG).
+Driver for [scapy network manipulation
+tool](http://www.secdev.org/projects/scapy/) to allow capturing packets via
+[Linux NFLOG interface](http://wiki.wireshark.org/CaptureSetup/NFLOG).
 
 
 

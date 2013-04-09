@@ -13,7 +13,7 @@ except IOError: readme = ''
 setup(
 
 	name = 'scapy-nflog-capture',
-	version = '13.04.2',
+	version = '13.04.3',
 	author = 'Mike Kazantsev',
 	author_email = 'mk.fraggod@gmail.com',
 	license = 'WTFPL',
