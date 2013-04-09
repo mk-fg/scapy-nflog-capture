@@ -10,6 +10,7 @@ log = logging.getLogger('nflog')
 
 
 class NFLogError(OSError): pass
+NFWouldBlock = type('NFWouldBlock', (object,), dict())
 
 class c_nflog_timeval(ctypes.Structure):
 	_fields_ = [
@@ -119,10 +120,15 @@ def nflog_generator(qids,
 	if not recv_buff: recv_buff = min(nlbufsiz, 1*2**20)
 	buff = ctypes.create_string_buffer(recv_buff)
 
-	yield fd # yield fd for poll() on first iteration
+	block = yield fd # yield fd for poll() on first iteration
 	while True:
+		if block:
+			block = yield NFWouldBlock # poll/recv is required
+			continue
 		_cb_result = list()
-		try: pkt = libnflog.recv(fd, buff, recv_buff, 0)
+
+		# Receive/process netlink data, which may contain multiple packets
+		try: nlpkt = libnflog.recv(fd, buff, recv_buff, 0)
 		except OSError as err:
 			if handle_overflows and err.errno == errno.ENOBUFS:
 				log.warn( 'nlbufsiz seem'
@@ -130,10 +136,12 @@ def nflog_generator(qids,
 					' consider raising it via corresponding function keyword' )
 				continue
 			raise
-		libnflog.nflog_handle_packet(handle, buff, pkt)
+		libnflog.nflog_handle_packet(handle, buff, nlpkt)
+
+		# yield individual traffic packets
 		for result in _cb_result:
 			if result is StopIteration: raise result
-			yield result
+			block = yield result
 
 
 if __name__ == '__main__':
