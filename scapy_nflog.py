@@ -19,7 +19,7 @@ class NFLOGReaderThread(Thread):
 		super(NFLOGReaderThread, self).__init__()
 		self.queues, self.pipe = queues, deque()
 		self.pipe_chk, self._pipe = os.pipe()
-		self.pipe_chk, self._pipe = os.fdopen(self.pipe_chk), os.fdopen(self._pipe, 'w')
+		self.pipe_chk, self._pipe = os.fdopen(self.pipe_chk, 'r', 0), os.fdopen(self._pipe, 'w', 0)
 
 	def run(self):
 		nflog = nflog_generator(self.queues, extra_attrs=['ts'], nlbufsiz=2*2**20)
