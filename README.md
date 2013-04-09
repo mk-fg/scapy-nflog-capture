@@ -98,7 +98,8 @@ of these rules and won't be wasting ram, cpu or anything like that.
 Userspace readers (like this module) can subscribe to receive these packets,
 setting how many bytes of these will be buffered in-kernel for later recv()
 calls (optional "nlbufsiz" keyword to nflog_generator), the rest will be just
-dropped (producing a one-time kmsg warning iirc) until userspace catches up.
+dropped (producing python logging warning by default, unless
+`handle_overflows=False` is passed) until userspace catches up.
 
 NFLOG itself is configurable with parameters like --nflog-group and
 --nflog-range (see iptables-extensions(8)), allowing to have multiple nflog

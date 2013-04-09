@@ -49,7 +49,7 @@ _cb_result = None # pity there's no "nonlocal" in py2.X
 def nflog_generator(qids,
 		pf=(socket.AF_INET, socket.AF_INET6),
 		qthresh=None, timeout=None, nlbufsiz=None,
-		recv_buff=None, extra_attrs=None ):
+		recv_buff=None, extra_attrs=None, handle_overflows=True ):
 	'''Generator that yields:
 			- on first iteration - netlink fd that can be poll'ed
 				or integrated into some event loop (twisted, gevent, ...).
@@ -124,7 +124,7 @@ def nflog_generator(qids,
 		_cb_result = list()
 		try: pkt = libnflog.recv(fd, buff, recv_buff, 0)
 		except OSError as err:
-			if err.errno == errno.ENOBUFS:
+			if handle_overflows and err.errno == errno.ENOBUFS:
 				log.warn( 'nlbufsiz seem'
 					' to be insufficient to hold unprocessed packets,'
 					' consider raising it via corresponding function keyword' )
