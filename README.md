@@ -84,7 +84,7 @@ kmsg, but using special netlink queues to export netfilter-matched (think
 [iptables](http://www.netfilter.org/projects/iptables/index.html) rules) packets
 to userspace.
 
-To export all packets received via nflog:
+To export all sent/received packets via nflog:
 
 	iptables -t raw -I PREROUTING -j NFLOG
 	iptables -t raw -I OUTPUT -j NFLOG
@@ -97,7 +97,7 @@ linux.
 
 Note that it's safe to add the above catch-all rules, as with no listeners
 (nothing queries nflog for these packets), they'll just be discarded regardless
-of these rules and won't be wasting ram, cpu or anything like that.
+of these rules and won't be wasting much ram, cpu or anything like that.
 
 Userspace readers (like this module) can subscribe to receive these packets,
 setting how many bytes of these will be buffered in-kernel for later recv()
@@ -109,7 +109,7 @@ NFLOG itself is configurable with parameters like --nflog-group and
 --nflog-range (see iptables-extensions(8)), allowing to have multiple nflog
 queues for different apps and not passing lots of useless L7 data around.
 
-NFLOG performance - especially coupled with in-kernel noise filtering and packet
+Performance - especially coupled with in-kernel noise filtering and packet
 truncation - seem to be more efficient than simpler approaches like using
 AF_PACKET/SOCK_RAW sockets, but it's highly unlikely to be any kind of a
 bottleneck with scapy sitting on top of it anyway.
