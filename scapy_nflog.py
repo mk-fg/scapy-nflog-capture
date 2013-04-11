@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
+import itertools as it, operator as op, functools as ft
 from threading import Thread
 from collections import deque
 import os
@@ -64,6 +65,6 @@ class NFLOGListenSocket(SuperSocket):
 		SuperSocket.close(self)
 
 
-def install_nflog_listener():
+def install_nflog_listener(queues=None):
 	'Install as default scapy L2 listener.'
-	conf.L2listen = NFLOGListenSocket
+	conf.L2listen = ft.partial(NFLOGListenSocket, queues=queues)
