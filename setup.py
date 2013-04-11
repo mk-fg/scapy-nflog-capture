@@ -15,13 +15,14 @@ from nflog_cffi import NFLOG
 setup(
 
 	name = 'scapy-nflog-capture',
-	version = '13.04.10',
+	version = '13.04.11',
 	author = 'Mike Kazantsev',
 	author_email = 'mk.fraggod@gmail.com',
 	license = 'WTFPL',
 	keywords = [ 'nflog', 'scapy', 'plugin', 'driver', 'traffic', 'analysis',
 		'analyze', 'capture', 'dump', 'network', 'linux', 'security', 'sniffer', 'spoof',
-		'netfilter', 'iptables', 'xtables', 'filter', 'filtering', 'firewall', 'audit' ],
+		'netfilter', 'iptables', 'xtables', 'filter', 'filtering', 'firewall', 'audit',
+		'cffi', 'libnetfilter_log', 'socket' ],
 	url = 'http://github.com/mk-fg/scapy-nflog-capture',
 
 	description = 'Driver for scapy to allow capturing packets via Linux NFLOG interface',
@@ -43,5 +44,5 @@ setup(
 
 	ext_modules = [NFLOG().ffi.verifier.get_extension()],
 
-	py_modules = ['nflog_ctypes', 'scapy_nflog'],
+	py_modules = ['nflog_cffi', 'scapy_nflog'],
 	package_data = {'': ['README.txt']} )
