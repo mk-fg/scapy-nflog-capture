@@ -10,10 +10,12 @@ try:
 		os.path.dirname(__file__), 'README.txt' )).read()
 except IOError: readme = ''
 
+from nflog_cffi import NFLOG
+
 setup(
 
 	name = 'scapy-nflog-capture',
-	version = '13.04.9',
+	version = '13.04.10',
 	author = 'Mike Kazantsev',
 	author_email = 'mk.fraggod@gmail.com',
 	license = 'WTFPL',
@@ -38,6 +40,8 @@ setup(
 		'Topic :: Security',
 		'Topic :: System :: Networking :: Monitoring',
 		'Topic :: System :: Operating System Kernels :: Linux' ],
+
+	ext_modules = [NFLOG().ffi.verifier.get_extension()],
 
 	py_modules = ['nflog_ctypes', 'scapy_nflog'],
 	package_data = {'': ['README.txt']} )

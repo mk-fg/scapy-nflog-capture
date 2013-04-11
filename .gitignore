@@ -4,3 +4,4 @@
 /README.txt
 *.pyc
 *.pyo
+__pycache__

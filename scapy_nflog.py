@@ -7,7 +7,7 @@ from collections import deque
 import os
 
 from scapy.all import conf, SuperSocket, ETH_P_ALL, IP, Scapy_Exception
-from nflog_ctypes import nflog_generator, NFWouldBlock
+from nflog_cffi import NFLOG, NFWouldBlock
 
 
 class NFLOGReaderThread(Thread):
@@ -16,14 +16,14 @@ class NFLOGReaderThread(Thread):
 
 	daemon = True
 
-	def __init__(self, queues):
+	def __init__(self, queues, **nflog_kwargs):
 		super(NFLOGReaderThread, self).__init__()
-		self.queues, self.pipe = queues, deque()
+		self.queues, self.nflog_kwargs, self.pipe = queues, nflog_kwargs, deque()
 		self.pipe_chk, self._pipe = os.pipe()
 		self.pipe_chk, self._pipe = os.fdopen(self.pipe_chk, 'r', 0), os.fdopen(self._pipe, 'w', 0)
 
 	def run(self):
-		nflog = nflog_generator(self.queues, extra_attrs=['ts'], nlbufsiz=2*2**20)
+		nflog = NFLOG().generator(self.queues, extra_attrs=['ts'], **nflog_kwargs)
 		next(nflog)
 		for pkt_info in nflog:
 			self.pipe.append(pkt_info)
@@ -38,10 +38,10 @@ class NFLOGListenSocket(SuperSocket):
 	queues = range(4)
 
 	def __init__( self, iface=None, type=ETH_P_ALL,
-			promisc=None, filter=None, nofilter=0, queues=None ):
+			promisc=None, filter=None, nofilter=0, queues=None, nflog_kwargs=dict() ):
 		self.type, self.outs = type, None
 		if queues is None: queues = self.queues
-		self.nflog = NFLOGReaderThread(queues)
+		self.nflog = NFLOGReaderThread(queues, **nflog_kwargs)
 		self.nflog.start()
 		self.ins = self.nflog.pipe_chk
 
@@ -65,6 +65,7 @@ class NFLOGListenSocket(SuperSocket):
 		SuperSocket.close(self)
 
 
-def install_nflog_listener(queues=None):
+def install_nflog_listener(queues=None, **nflog_kwargs):
 	'Install as default scapy L2 listener.'
-	conf.L2listen = ft.partial(NFLOGListenSocket, queues=queues)
+	conf.L2listen = ft.partial( NFLOGListenSocket,
+		queues=queues, nflog_kwargs=nflog_kwargs )

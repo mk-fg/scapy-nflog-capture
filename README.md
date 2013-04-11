@@ -42,7 +42,11 @@ Current-git version can be installed like this:
 
 * Python 2.7 with ctypes support
 * [scapy](http://www.secdev.org/projects/scapy/)
-* [libnetfilter_log.so.1](http://netfilter.org/projects/libnetfilter_log)
+* [CFFI](http://cffi.readthedocs.org) (for libnetfilter_log bindings)
+* [libnetfilter_log](http://netfilter.org/projects/libnetfilter_log)
+
+CFFI uses C compiler to generate bindings, so gcc (or other compiler) should be
+available if module is being built from source or used from checkout tree.
 
 
 
@@ -115,17 +119,16 @@ packets after decryption (traffic coming from ipsec, pptp, openvpn, ssh, etc) or
 transformation (stripping of ipip wrapping, netlink re-injection and such) here.
 
 
-### nflog_ctypes
+### nflog_cffi
 
-scapy_nflog module is based on nflog_ctypes module (originally written for
-[nflog-zmq-pcap-pipe](https://github.com/mk-fg/nflog-zmq-pcap-pipe) project),
-which can be used from any python code (scapy shell included):
+scapy_nflog is based on nflog_cffi module, which can be used from any python
+code (scapy shell included):
 
 ```python
-from nflog_ctypes import nflog_generator
+from nflog_cffi import NFLOG
 
 # without extra_attrs just packet payload (possibly truncated) is returned
-nflog = nflog_generator(0, extra_attrs=['len', 'ts'], nlbufsiz=2*2**20) # queue id
+nflog = NFLOG().generator(0, extra_attrs=['len', 'ts'], nlbufsiz=2*2**20)
 fd = next(nflog) # netlink fd to do select/poll on, if necessary
 
 # pkt_len is the *real* length, before nflog-truncation (if any)
@@ -136,17 +139,13 @@ print('Got packet, len: {}, ts: {}'.format(pkt_len, pkt_ts))
 for pkt, pkt_len, pkt_ts in nflog: # do stuff with each captured packet
 ```
 
-Module uses
-[libnetfilter_log](http://www.netfilter.org/projects/libnetfilter_log/index.html)
-via cPython ctypes ffi.
+Module uses libnetfilter_log via CFFI.
 
-nflog_generator has the keywords to control parameters of netlink socket that
+NFLOG generator has the keywords to control parameters of netlink socket that
 are passed to libnetfilter_log, see [libnetfilter_log
 documentation](http://www.netfilter.org/projects/libnetfilter_log/doxygen/group__Log.html)
 for more verbose description of these.
-Not everything from libnetfilter_log is supported, patches welcome.
 
-I would have used C
-[nflog-bindings](https://www.wzdftpd.net/redmine/projects/nflog-bindings)
-module, but it leaks RAM like titanic, uses printf() in the code (and for each.
-captured packet, no less), plus still incomplete and buggy.
+Not all [libnetfilter_log-exposed
+attributes](http://www.netfilter.org/projects/libnetfilter_log/doxygen/group__Parsing.html)
+are exposed through bindings.
