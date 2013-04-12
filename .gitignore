@@ -2,6 +2,7 @@
 /build
 /dist
 /README.txt
+/MANIFEST
+/__pycache__
 *.pyc
 *.pyo
-__pycache__
