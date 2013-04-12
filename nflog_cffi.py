@@ -100,20 +100,31 @@ class NFLOG(object):
 		self.ffi = FFI()
 		self.ffi.cdef(_cdef)
 		self.libnflog = self.ffi.verify(_clibs_includes, libraries=list(_clibs_link))
+		self.libnflog_cache = dict()
 		_cdef = _clibs_includes = _clibs_link = None
 
 
-	def _chk_int(self, res, gt0=False):
-		if res < 0 or (gt0 and res == 0):
-			errno_ = self.ffi.errno
-			raise NFLogError(errno_, os.strerror(errno_))
-		return res
+	def _ffi_call( self, func, args,
+			no_check=False, check_gt0=False, check_null=False ):
+		'''Call libnflog function through cffi,
+				checking return value and raising error, if necessary.
+			Checks if return is >0 by default.'''
+		res = func(*args)
+		if no_check\
+			or (check_gt0 and res > 0)\
+			or (check_null and not res)\
+			or res >= 0: return res
+		errno_ = self.ffi.errno
+		raise NFLogError(errno_, os.strerror(errno_))
 
-	def _chk_null(self, res):
-		if not res:
-			errno_ = self.ffi.errno
-			raise NFLogError(errno_, os.strerror(errno_))
-		return res
+	def __getattr__(self, k):
+		if not (k.startswith('nflog_') or k.startswith('c_')):
+			return super(NFLOG, self).__getattr__(k)
+		if k.startswith('c_'): k = k[2:]
+		if k not in self.libnflog_cache:
+			func = getattr(self.libnflog, k)
+			self.libnflog_cache[k] = lambda *a,**kw: self._ffi_call(func, a, **kw)
+		return self.libnflog_cache[k]
 
 
 	def generator( self, qids,
@@ -140,12 +151,11 @@ class NFLOG(object):
 				handle_overflows: supress ENOBUFS NFLogError on
 					queue overflows (but do log warnings, default: True)'''
 
-		lib = self.libnflog
-		handle = self._chk_null(lib.nflog_open())
+		handle = self.nflog_open(check_null=True)
 
 		for pf in (pf if not isinstance(pf, int) else [pf]):
-			self._chk_int(lib.nflog_unbind_pf(handle, pf))
-			self._chk_int(lib.nflog_bind_pf(handle, pf))
+			self.nflog_unbind_pf(handle, pf)
+			self.nflog_bind_pf(handle, pf)
 
 		if isinstance(extra_attrs, bytes): extra_attrs = [extra_attrs]
 
@@ -156,7 +166,7 @@ class NFLOG(object):
 				pkt_slot=self.ffi.new('char **'),
 				ts_err_mask=frozenset([0, errno.EAGAIN]), result=None ):
 			try:
-				pkt_len = self._chk_int(lib.nflog_get_payload(nfad, pkt_slot))
+				pkt_len = self.nflog_get_payload(nfad, pkt_slot)
 				result = self.ffi.buffer(pkt_slot[0], pkt_len)[:]
 				if extra_attrs:
 					result = [result]
@@ -164,7 +174,7 @@ class NFLOG(object):
 						if attr == 'len': result.append(pkt_len)
 						elif attr == 'ts':
 							# Fails quite often (EAGAIN, SUCCESS, ...), not sure why
-							try: self._chk_int(lib.nflog_get_timestamp(nfad, ts_slot))
+							try: self.nflog_get_timestamp(nfad, ts_slot)
 							except NFLogError as err:
 								if err.errno not in ts_err_mask: raise
 								result.append(None)
@@ -177,14 +187,14 @@ class NFLOG(object):
 			return 0
 
 		for qid in (qids if not isinstance(qids, int) else [qids]):
-			qh = self._chk_null(lib.nflog_bind_group(handle, qid))
-			self._chk_int(lib.nflog_set_mode(qh, lib.NFULNL_COPY_PACKET, 0xffff))
-			if qthresh: self._chk_int(lib.nflog_set_qthresh(qh, qthresh))
-			if timeout: self._chk_int(lib.nflog_set_timeout(qh, int(timeout * 100)))
-			if nlbufsiz: self._chk_int(lib.nflog_set_nlbufsiz(qh, nlbufsiz))
-			self._chk_int(lib.nflog_callback_register(qh, recv_callback, self.ffi.NULL))
+			qh = self.nflog_bind_group(handle, qid, check_null=True)
+			self.nflog_set_mode(qh, self.libnflog.NFULNL_COPY_PACKET, 0xffff)
+			if qthresh: self.nflog_set_qthresh(qh, qthresh)
+			if timeout: self.nflog_set_timeout(qh, int(timeout * 100))
+			if nlbufsiz: self.nflog_set_nlbufsiz(qh, nlbufsiz)
+			self.nflog_callback_register(qh, recv_callback, self.ffi.NULL)
 
-		fd = lib.nflog_fd(handle)
+		fd = self.nflog_fd(handle)
 		if not buff_size:
 			if nlbufsiz: buff_size = min(nlbufsiz, 1*2**20)
 			else: buff_size = 1*2**20
@@ -197,7 +207,7 @@ class NFLOG(object):
 				continue
 
 			# Receive/process netlink data, which may contain multiple packets
-			try: nlpkt_size = self._chk_int(lib.recv(fd, buff, buff_size, 0))
+			try: nlpkt_size = self.c_recv(fd, buff, buff_size, 0)
 			except NFLogError as err:
 				if handle_overflows and err.errno == errno.ENOBUFS:
 					log.warn( 'nlbufsiz seem'
@@ -205,7 +215,7 @@ class NFLOG(object):
 						' consider raising it via corresponding function keyword' )
 					continue
 				raise
-			lib.nflog_handle_packet(handle, buff, nlpkt_size)
+			self.nflog_handle_packet(handle, buff, nlpkt_size, no_check=True)
 
 			# yield individual L3 packets
 			for result in cb_results:
