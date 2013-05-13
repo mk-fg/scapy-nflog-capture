@@ -105,14 +105,14 @@ class NFLOG(object):
 
 
 	def _ffi_call( self, func, args,
-			no_check=False, check_gt0=False, check_null=False ):
+			no_check=False, check_gt0=False, check_notnull=False ):
 		'''Call libnflog function through cffi,
 				checking return value and raising error, if necessary.
 			Checks if return is >0 by default.'''
 		res = func(*args)
 		if no_check\
 			or (check_gt0 and res > 0)\
-			or (check_null and not res)\
+			or (check_notnull and res)\
 			or res >= 0: return res
 		errno_ = self.ffi.errno
 		raise NFLogError(errno_, os.strerror(errno_))
@@ -151,7 +151,7 @@ class NFLOG(object):
 				handle_overflows: supress ENOBUFS NFLogError on
 					queue overflows (but do log warnings, default: True)'''
 
-		handle = self.nflog_open(check_null=True)
+		handle = self.nflog_open(check_notnull=True)
 
 		for pf in (pf if not isinstance(pf, int) else [pf]):
 			self.nflog_unbind_pf(handle, pf)
@@ -187,7 +187,7 @@ class NFLOG(object):
 			return 0
 
 		for qid in (qids if not isinstance(qids, int) else [qids]):
-			qh = self.nflog_bind_group(handle, qid, check_null=True)
+			qh = self.nflog_bind_group(handle, qid, check_notnull=True)
 			self.nflog_set_mode(qh, self.libnflog.NFULNL_COPY_PACKET, 0xffff)
 			if qthresh: self.nflog_set_qthresh(qh, qthresh)
 			if timeout: self.nflog_set_timeout(qh, int(timeout * 100))
