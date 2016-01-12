@@ -179,6 +179,8 @@ class NFLOG(object):
 								if err.errno not in ts_err_mask: raise
 								result.append(None)
 							else: result.append(ts_slot.tv_sec + ts_slot.tv_usec * 1e-6)
+						elif attr == 'prefix':
+							result.append(self.ffi.string(self.nflog_get_prefix(nfad)) or None)
 						else: raise NotImplementedError('Unknown nflog attribute: {}'.format(attr))
 				cb_results.append(result)
 			except:
