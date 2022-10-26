@@ -20,7 +20,7 @@ class NFLOGReaderThread(Thread):
 		super(NFLOGReaderThread, self).__init__()
 		self.queues, self.nflog_kwargs, self.pipe = queues, nflog_kwargs, deque()
 		self.pipe_chk, self._pipe = os.pipe()
-		self.pipe_chk, self._pipe = os.fdopen(self.pipe_chk, 'r', 0), os.fdopen(self._pipe, 'w', 0)
+		self.pipe_chk, self._pipe = os.fdopen(self.pipe_chk, 'r'), os.fdopen(self._pipe, 'w')
 
 	def run(self):
 		nflog = NFLOG().generator(self.queues, extra_attrs=['ts'], **self.nflog_kwargs)
@@ -45,7 +45,7 @@ class NFLOGListenSocket(SuperSocket):
 		self.nflog.start()
 		self.ins = self.nflog.pipe_chk
 
-	def recv(self, bufsize):
+	def recv(self):
 		self.ins.read(1) # used only for poll/sync
 		pkt, ts = self.nflog.pipe.popleft()
 		if pkt is None: return

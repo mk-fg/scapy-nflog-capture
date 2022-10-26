@@ -10,7 +10,7 @@ tool](http://www.secdev.org/projects/scapy/) to allow capturing packets via
 Installation
 --------------------
 
-It's a regular package for Python 2.7 (not 3.X).
+It's a regular package for Python 3
 
 Using [pip](http://pip-installer.org/) is the best way:
 
@@ -40,7 +40,7 @@ Current-git version can be installed like this:
 
 ### Requirements
 
-* Python 2.7 with ctypes support
+* Python 3
 * [scapy](http://www.secdev.org/projects/scapy/)
 * [CFFI](http://cffi.readthedocs.org) (for libnetfilter_log bindings)
 * [libnetfilter_log](http://netfilter.org/projects/libnetfilter_log)
@@ -60,6 +60,7 @@ installed as default L2 listener like this:
 
 	>>> import scapy_nflog
 	>>> scapy_nflog.install_nflog_listener()
+	>>> sniff(prn=handler)
 
 install_nflog_listener above is a one-line function, doing `conf.L2listen =
 NFLOGListenSocket`, so if you're building custom module on scapy,

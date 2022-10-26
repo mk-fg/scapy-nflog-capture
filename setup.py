@@ -15,7 +15,7 @@ from nflog_cffi import NFLOG
 setup(
 
 	name = 'scapy-nflog-capture',
-	version = '13.05.0',
+	version = '13.06.0',
 	author = 'Mike Kazantsev',
 	author_email = 'mk.fraggod@gmail.com',
 	license = 'WTFPL',
@@ -36,8 +36,8 @@ setup(
 		'License :: OSI Approved',
 		'Operating System :: POSIX :: Linux',
 		'Programming Language :: Python',
-		'Programming Language :: Python :: 2.7',
-		'Programming Language :: Python :: 2 :: Only',
+		'Programming Language :: Python :: 3',
+		'Programming Language :: Python :: 3 :: Only',
 		'Topic :: Security',
 		'Topic :: System :: Networking :: Monitoring',
 		'Topic :: System :: Operating System Kernels :: Linux' ],
