@@ -1,8 +1,13 @@
 scapy-nflog-capture
 --------------------
 
-Driver for [scapy network manipulation
-tool](http://www.secdev.org/projects/scapy/) to allow capturing packets via
+**Deprecation Warning:**
+I haven't used or looked at this module for a while,
+and it's obviously long-obsolete python2 code, so unless it's for similar legacy/obsolete uses,
+I'd recommend to avoid using this module, or look at one of its more up-to-date forks, if any.
+
+Driver for [scapy network manipulation tool](http://www.secdev.org/projects/scapy/)
+to allow capturing packets via
 [Linux NFLOG interface](http://wiki.wireshark.org/CaptureSetup/NFLOG).
 
 
